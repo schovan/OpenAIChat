@@ -1,6 +1,7 @@
 <Window x:Class="AIPChatApp.Views.ApiKeyView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         Title="Enter Google API Key" Width="400" SizeToContent="Height"
         Background="#343541"
         WindowStartupLocation="CenterScreen"
@@ -50,6 +51,12 @@
                     <Setter Property="CornerRadius" Value="6"/>
                 </Style>
             </Button.Resources>
+            <i:Interaction.Triggers>
+                <i:EventTrigger EventName="Click">
+                    <i:CallMethodAction TargetObject="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                        MethodName="Close"/>
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
         </Button>
     </Grid>
 </Window>
