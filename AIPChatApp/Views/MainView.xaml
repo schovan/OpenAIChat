@@ -27,6 +27,14 @@
             <Setter Property="Margin" Value="40,10,40,10"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
         </Style>
+        <Style x:Key="WelcomeMessageStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#8E8EA0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,30,0,10"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
         <Style x:Key="MessageTextStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#ECECF1"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
@@ -42,7 +50,7 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Background="#202123" Padding="15">
-            <TextBlock Text="Google Gemini Chat" Foreground="White" FontWeight="Bold" FontSize="16"/>
+            <TextBlock Text="NVIDIA NIM Chat" Foreground="White" FontWeight="Bold" FontSize="16"/>
         </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" x:Name="ChatScrollViewer">
@@ -53,30 +61,46 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type viewModels:MessageViewModel}">
                         <Grid Margin="0,5,0,5">
-                            <Border x:Name="UserMessageBorder" 
-                                    Style="{StaticResource UserMessageStyle}" 
+                            <Border x:Name="UserMessageBorder"
+                                    Style="{StaticResource UserMessageStyle}"
                                     Visibility="Collapsed"
                                     MaxWidth="600">
-                                <TextBlock Text="{Binding Content}" 
+                                <TextBlock Text="{Binding Content}"
                                            Style="{StaticResource MessageTextStyle}"/>
                             </Border>
-                            
-                            <Border x:Name="AiMessageBorder" 
-                                    Style="{StaticResource AiMessageStyle}" 
+
+                            <Border x:Name="AiMessageBorder"
+                                    Style="{StaticResource AiMessageStyle}"
                                     Visibility="Collapsed"
                                     MaxWidth="600">
-                                <markdig:MarkdownViewer Markdown="{Binding Content}" 
-                                                        Foreground="#ECECF1" 
+                                <markdig:MarkdownViewer Markdown="{Binding Content}"
+                                                        Foreground="#ECECF1"
                                                         FontSize="14"/>
                             </Border>
+
+                            <TextBlock x:Name="WelcomeTextBlock"
+                                       Text="{Binding Content}"
+                                       Style="{StaticResource WelcomeMessageStyle}"
+                                       Visibility="Collapsed"/>
                         </Grid>
                         <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsUser}" Value="True">
+                            <DataTrigger Binding="{Binding IsWelcome}" Value="True">
+                                <Setter TargetName="WelcomeTextBlock" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsWelcome}" Value="False"/>
+                                    <Condition Binding="{Binding IsUser}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
                                 <Setter TargetName="UserMessageBorder" Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsUser}" Value="False">
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsWelcome}" Value="False"/>
+                                    <Condition Binding="{Binding IsUser}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
                                 <Setter TargetName="AiMessageBorder" Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
+                            </MultiDataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

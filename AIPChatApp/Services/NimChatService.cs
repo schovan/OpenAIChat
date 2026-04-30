@@ -37,7 +37,7 @@ namespace AIPChatApp.Services
 
     public class NimChatService : INimChatService
     {
-        private const string ModelName = "nvidia/nemotron-3-super-120b-a12b";
+        private const string ModelName = "minimaxai/minimax-m2.7";
         private const string Endpoint = "https://integrate.api.nvidia.com/v1/chat/completions";
 
         private readonly HttpClient _http;
@@ -101,6 +101,8 @@ namespace AIPChatApp.Services
 
                 var assistant = new StringBuilder();
                 var buffer = new byte[8192];
+                var charBuffer = new char[8192];
+                var decoder = Encoding.UTF8.GetDecoder();
                 var lineBuffer = new StringBuilder();
                 DateTime lineUtc = default;
                 long lineNs = 0;
@@ -118,11 +120,13 @@ namespace AIPChatApp.Services
                     // Timestamp the *exact* moment bytes came off the wire.
                     var (utc, ns) = Now();
 
-                    for (int i = 0; i < read; i++)
-                    {
-                        char c = (char)buffer[i];
+                    int charCount = decoder.GetChars(buffer, 0, read, charBuffer, 0);
 
-                        // First byte that belongs to the current line wins the timestamp.
+                    for (int i = 0; i < charCount; i++)
+                    {
+                        char c = charBuffer[i];
+
+                        // First char that belongs to the current line wins the timestamp.
                         if (!lineStamped)
                         {
                             lineUtc = utc;

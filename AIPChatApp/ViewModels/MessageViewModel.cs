@@ -9,5 +9,8 @@ namespace AIPChatApp.ViewModels
 
         [ObservableProperty]
         private bool _isUser;
+
+        [ObservableProperty]
+        private bool _isWelcome;
     }
 }

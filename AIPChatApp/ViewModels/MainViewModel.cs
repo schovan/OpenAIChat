@@ -13,6 +13,7 @@ namespace AIPChatApp.ViewModels
 
         private MessageViewModel? _thinkingMessage;
         private MessageViewModel? _finalMessage;
+        private bool _thinkingStamped;
 
         [ObservableProperty]
         private ObservableCollection<MessageViewModel> _messages = new ObservableCollection<MessageViewModel>();
@@ -27,7 +28,7 @@ namespace AIPChatApp.ViewModels
         {
             _chat = chat;
             _chat.DeltaReceived += OnDeltaReceived;
-            Write("Hello! I am your AI assistant. How can I help you today?");
+            Messages.Add(new MessageViewModel { Content = "Welcome to NVIDIA NIM Chat", IsUser = false, IsWelcome = true });
         }
 
         [RelayCommand]
@@ -45,8 +46,9 @@ namespace AIPChatApp.ViewModels
 
             _history.Add(("user", prompt));
 
-            _thinkingMessage = CreateAndWrite("=== [THINKING PROCESS] ===");
+            _thinkingMessage = CreateAndWrite("Waiting for response…");
             _finalMessage = null;
+            _thinkingStamped = false;
 
             try
             {
@@ -70,7 +72,7 @@ namespace AIPChatApp.ViewModels
         {
             var local = e.TimestampUtc.ToLocalTime();
             var ms = e.NanosecondOfSecond / 1_000_000;
-            var stamp = $"[{local:HH:mm:ss}.{ms:D3}] ";
+            var stamp = $" [{local:HH:mm:ss}.{ms:D3}]";
 
             // Marshal to UI thread; use BeginInvoke so the network loop never blocks on rendering.
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
@@ -79,13 +81,18 @@ namespace AIPChatApp.ViewModels
                 {
                     if (_thinkingMessage != null)
                     {
-                        _thinkingMessage.Content += stamp + e.Text;
+                        if (!_thinkingStamped)
+                        {
+                            _thinkingMessage.Content = $"=== [THINKING PROCESS]{stamp} ===\n\n";
+                            _thinkingStamped = true;
+                        }
+                        _thinkingMessage.Content += e.Text;
                     }
                 }
                 else
                 {
-                    _finalMessage ??= CreateAndWrite("=== [FINAL RESPONSE] ===");
-                    _finalMessage.Content += stamp + e.Text;
+                    _finalMessage ??= CreateAndWrite($"=== [FINAL RESPONSE]{stamp} ===");
+                    _finalMessage.Content += e.Text;
                 }
             }));
         }
