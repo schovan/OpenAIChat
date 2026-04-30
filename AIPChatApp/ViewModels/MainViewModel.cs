@@ -1,19 +1,19 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Google.GenAI;
-using Google.GenAI.Types;
 using System.Collections.ObjectModel;
+using System.Windows;
 using AIPChatApp.Services;
 
 namespace AIPChatApp.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        private const string ModelName = "gemini-2.5-flash";
+        private readonly INimChatService _chat;
+        private readonly List<(string Role, string Content)> _history = new();
 
-        private readonly Client _client;
-        private readonly GenerateContentConfig _config;
-  
+        private MessageViewModel? _thinkingMessage;
+        private MessageViewModel? _finalMessage;
+
         [ObservableProperty]
         private ObservableCollection<MessageViewModel> _messages = new ObservableCollection<MessageViewModel>();
 
@@ -23,17 +23,10 @@ namespace AIPChatApp.ViewModels
         [ObservableProperty]
         private bool _isLoading;
 
-        public MainViewModel(IApiKeyService apiKeyService)
+        public MainViewModel(INimChatService chat)
         {
-            var apiKey = apiKeyService.GetKey();
-            _client = new Client(apiKey:apiKey);
-            _config = new GenerateContentConfig
-            {
-                ThinkingConfig = new ThinkingConfig
-                {
-                    IncludeThoughts = true
-                }
-            };
+            _chat = chat;
+            _chat.DeltaReceived += OnDeltaReceived;
             Write("Hello! I am your AI assistant. How can I help you today?");
         }
 
@@ -50,30 +43,17 @@ namespace AIPChatApp.ViewModels
             UserInput = string.Empty;
             IsLoading = true;
 
+            _history.Add(("user", prompt));
+
+            _thinkingMessage = CreateAndWrite("=== [THINKING PROCESS] ===");
+            _finalMessage = null;
+
             try
             {
-                var stream = _client.Models.GenerateContentStreamAsync(model: ModelName, contents: prompt, config: _config);
-
-                MessageViewModel thinkingMessage = CreateAndWrite("=== [THINKING PROCESS] ===");
-                MessageViewModel finalMessage = null;
-
-                await foreach (var response in stream)
+                var assistantText = await _chat.StreamAsync(_history);
+                if (!string.IsNullOrEmpty(assistantText))
                 {
-                    if (response.Candidates != null && response.Candidates.Count > 0)
-                    {
-                        foreach (var part in response.Candidates[0].Content.Parts)
-                        {
-                            if (part.Thought == true)
-                            {
-                                Append(thinkingMessage, part.Text);
-                            }
-                            else if (!string.IsNullOrEmpty(part.Text))
-                            {
-                                finalMessage ??= CreateAndWrite("=== [FINAL RESPONSE] ===");
-                                Append(finalMessage, part.Text);
-                            }
-                        }
-                    }
+                    _history.Add(("assistant", assistantText));
                 }
             }
             catch (Exception ex)
@@ -86,6 +66,30 @@ namespace AIPChatApp.ViewModels
             }
         }
 
+        private void OnDeltaReceived(object? sender, NimDeltaEventArgs e)
+        {
+            var local = e.TimestampUtc.ToLocalTime();
+            var ms = e.NanosecondOfSecond / 1_000_000;
+            var stamp = $"[{local:HH:mm:ss}.{ms:D3}] ";
+
+            // Marshal to UI thread; use BeginInvoke so the network loop never blocks on rendering.
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (e.Kind == NimDeltaKind.Thinking)
+                {
+                    if (_thinkingMessage != null)
+                    {
+                        _thinkingMessage.Content += stamp + e.Text;
+                    }
+                }
+                else
+                {
+                    _finalMessage ??= CreateAndWrite("=== [FINAL RESPONSE] ===");
+                    _finalMessage.Content += stamp + e.Text;
+                }
+            }));
+        }
+
         private MessageViewModel CreateAndWrite(string content)
         {
             var message = new MessageViewModel { Content = $"{content}\n\n", IsUser = false };
@@ -96,11 +100,6 @@ namespace AIPChatApp.ViewModels
         private void Write(string content)
         {
             Messages.Add(new MessageViewModel { Content = content, IsUser = false });
-        }
-
-        private void Append(MessageViewModel message, string content)
-        {
-            message.Content += content;
         }
     }
 }

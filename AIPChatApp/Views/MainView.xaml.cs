@@ -10,7 +10,7 @@ namespace AIPChatApp.Views
         {
             InitializeComponent();
             AppServiceLocator.Initialize();
-            this.DataContext = new MainViewModel(AppServiceLocator.ApiKeyService);
+            this.DataContext = new MainViewModel(AppServiceLocator.ChatService);
         }
     }
 }
