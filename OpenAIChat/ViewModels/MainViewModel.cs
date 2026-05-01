@@ -62,7 +62,12 @@ namespace OpenAIChat.ViewModels
             }
             catch (Exception ex)
             {
-                Write($"Error:\n\n{ex.Message}");
+                if (_waitingMessage != null)
+                {
+                    Messages.Remove(_waitingMessage);
+                    _waitingMessage = null;
+                }
+                CreateAiMessage($"Error · {StopwatchClock.FormatTimestamp(StopwatchClock.LocalNow())}").Content = ex.Message;
             }
             finally
             {
