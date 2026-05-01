@@ -14,26 +14,13 @@ namespace OpenAIChat.Services
 
         private readonly HttpClient _http;
 
-        // Anchor a wall-clock instant to a Stopwatch tick so we can produce
-        // sub-100ns-resolution wall-clock timestamps for each chunk.
-        private static readonly DateTime _anchorUtc;
-        private static readonly long _anchorTicks;
-        private static readonly double _nsPerStopwatchTick;
+        private static readonly DateTime _anchorUtc = DateTime.UtcNow;
+        private static readonly long _anchorTicks = Stopwatch.GetTimestamp();
+        private static readonly double _ticksPerStopwatchTick = TimeSpan.TicksPerMillisecond * 1.0 / (Stopwatch.Frequency / 1000.0);
 
-        static NimChatService()
+        private static DateTime Now()
         {
-            _anchorUtc = DateTime.UtcNow;
-            _anchorTicks = Stopwatch.GetTimestamp();
-            _nsPerStopwatchTick = 1_000_000_000.0 / Stopwatch.Frequency;
-        }
-
-        private static (DateTime Utc, long NanoOfSecond) Now()
-        {
-            var elapsedNs = (long)((Stopwatch.GetTimestamp() - _anchorTicks) * _nsPerStopwatchTick);
-            var utc = _anchorUtc.AddTicks(elapsedNs / 100);
-            // remainder of the current second, in nanoseconds
-            var nanoOfSecond = (utc.Ticks % TimeSpan.TicksPerSecond) * 100 + (elapsedNs % 100);
-            return (utc, nanoOfSecond);
+            return _anchorUtc.AddTicks((long)((Stopwatch.GetTimestamp() - _anchorTicks) * _ticksPerStopwatchTick));
         }
 
         public event EventHandler<NimDeltaEventArgs>? DeltaReceived;
@@ -77,7 +64,6 @@ namespace OpenAIChat.Services
                 var decoder = Encoding.UTF8.GetDecoder();
                 var lineBuffer = new StringBuilder();
                 DateTime lineUtc = default;
-                long lineNs = 0;
                 bool lineStamped = false;
 
                 while (true)
@@ -89,8 +75,7 @@ namespace OpenAIChat.Services
                         break;
                     }
 
-                    // Timestamp the *exact* moment bytes came off the wire.
-                    var (utc, ns) = Now();
+                    var utc = Now();
 
                     int charCount = decoder.GetChars(buffer, 0, read, charBuffer, 0);
 
@@ -98,11 +83,9 @@ namespace OpenAIChat.Services
                     {
                         char c = charBuffer[i];
 
-                        // First char that belongs to the current line wins the timestamp.
                         if (!lineStamped)
                         {
                             lineUtc = utc;
-                            lineNs = ns;
                             lineStamped = true;
                         }
 
@@ -110,7 +93,7 @@ namespace OpenAIChat.Services
                         {
                             var line = lineBuffer.ToString().TrimEnd('\r');
                             lineBuffer.Clear();
-                            var stampedAt = (lineUtc, lineNs);
+                            var stampedAt = lineUtc;
                             lineStamped = false;
 
                             if (string.IsNullOrEmpty(line) || !line.StartsWith("data:"))
@@ -142,7 +125,7 @@ namespace OpenAIChat.Services
                                     var text = reasoning.GetString();
                                     if (!string.IsNullOrEmpty(text))
                                     {
-                                        DeltaReceived?.Invoke(this, new NimDeltaEventArgs(NimDeltaKind.Thinking, text, stampedAt.lineUtc, stampedAt.lineNs));
+                                        DeltaReceived?.Invoke(this, new NimDeltaEventArgs(NimDeltaKind.Thinking, text, stampedAt));
                                     }
                                 }
 
@@ -152,7 +135,7 @@ namespace OpenAIChat.Services
                                     if (!string.IsNullOrEmpty(text))
                                     {
                                         assistant.Append(text);
-                                        DeltaReceived?.Invoke(this, new NimDeltaEventArgs(NimDeltaKind.Final, text, stampedAt.lineUtc, stampedAt.lineNs));
+                                        DeltaReceived?.Invoke(this, new NimDeltaEventArgs(NimDeltaKind.Final, text, stampedAt));
                                     }
                                 }
                             }

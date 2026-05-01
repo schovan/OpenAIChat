@@ -5,14 +5,12 @@ namespace OpenAIChat.Services
         public NimDeltaKind Kind { get; }
         public string Text { get; }
         public DateTime TimestampUtc { get; }
-        public long NanosecondOfSecond { get; }
 
-        public NimDeltaEventArgs(NimDeltaKind kind, string text, DateTime timestampUtc, long nanosecondOfSecond)
+        public NimDeltaEventArgs(NimDeltaKind kind, string text, DateTime timestampUtc)
         {
             Kind = kind;
             Text = text;
             TimestampUtc = timestampUtc;
-            NanosecondOfSecond = nanosecondOfSecond;
         }
     }
 }

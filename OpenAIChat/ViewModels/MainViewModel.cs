@@ -72,7 +72,7 @@ namespace OpenAIChat.ViewModels
         private void OnDeltaReceived(object? sender, NimDeltaEventArgs e)
         {
             var local = e.TimestampUtc.ToLocalTime();
-            var ms = e.NanosecondOfSecond / 1_000_000;
+            var ms = local.Millisecond;
 
             // Marshal to UI thread; use BeginInvoke so the network loop never blocks on rendering.
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
