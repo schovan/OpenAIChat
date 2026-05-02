@@ -1,6 +1,6 @@
 namespace OpenAIChat.Services
 {
-    public enum NimDeltaKind
+    public enum OpenAIDeltaKind
     {
         Thinking,
         Final

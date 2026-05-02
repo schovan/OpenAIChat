@@ -5,16 +5,16 @@ using System.Text.Json;
 
 namespace OpenAIChat.Services
 {
-    public class NimChatService : INimChatService
+    public class OpenAIChatService : IOpenAIChatService
     {
         private const string ModelName = "zai-org/GLM-5.1-FP8";
         private const string Endpoint = "https://api.us-west-2.modal.direct/v1/chat/completions";
 
         private readonly HttpClient _http;
 
-        public event EventHandler<NimDeltaEventArgs>? DeltaReceived;
+        public event EventHandler<OpenAIDeltaEventArgs>? DeltaReceived;
 
-        public NimChatService(IApiKeyService apiKeyService)
+        public OpenAIChatService(IApiKeyService apiKeyService)
         {
             _http = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
             _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKeyService.GetKey());
@@ -114,7 +114,7 @@ namespace OpenAIChat.Services
                                     var text = reasoning.GetString();
                                     if (!string.IsNullOrEmpty(text))
                                     {
-                                        DeltaReceived?.Invoke(this, new NimDeltaEventArgs(NimDeltaKind.Thinking, text, stampedAt));
+                                        DeltaReceived?.Invoke(this, new OpenAIDeltaEventArgs(OpenAIDeltaKind.Thinking, text, stampedAt));
                                     }
                                 }
 
@@ -124,7 +124,7 @@ namespace OpenAIChat.Services
                                     if (!string.IsNullOrEmpty(text))
                                     {
                                         assistant.Append(text);
-                                        DeltaReceived?.Invoke(this, new NimDeltaEventArgs(NimDeltaKind.Final, text, stampedAt));
+                                        DeltaReceived?.Invoke(this, new OpenAIDeltaEventArgs(OpenAIDeltaKind.Final, text, stampedAt));
                                     }
                                 }
                             }

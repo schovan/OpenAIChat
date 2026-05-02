@@ -8,7 +8,7 @@ namespace OpenAIChat.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        private readonly INimChatService _chat;
+        private readonly IOpenAIChatService _chat;
         private readonly List<(string Role, string Content)> _history = new();
 
         private MessageViewModel? _waitingMessage;
@@ -24,7 +24,7 @@ namespace OpenAIChat.ViewModels
         [ObservableProperty]
         private bool _isLoading;
 
-        public MainViewModel(INimChatService chat)
+        public MainViewModel(IOpenAIChatService chat)
         {
             _chat = chat;
             _chat.DeltaReceived += OnDeltaReceived;
@@ -75,7 +75,7 @@ namespace OpenAIChat.ViewModels
             }
         }
 
-        private void OnDeltaReceived(object? sender, NimDeltaEventArgs e)
+        private void OnDeltaReceived(object? sender, OpenAIDeltaEventArgs e)
         {
             var local = e.TimestampUtc.ToLocalTime();
 
@@ -87,7 +87,7 @@ namespace OpenAIChat.ViewModels
                     _waitingMessage = null;
                 }
 
-                if (e.Kind == NimDeltaKind.Thinking)
+                if (e.Kind == OpenAIDeltaKind.Thinking)
                 {
                     if (_thinkingMessage == null)
                     {
