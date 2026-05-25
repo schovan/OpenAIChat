@@ -17,13 +17,25 @@ namespace OpenAIChat.ViewModels
         private MessageViewModel? _finalMessage;
 
         private ObservableCollection<MessageViewModel> _messages = new();
-        public ObservableCollection<MessageViewModel> Messages { get => _messages; set => SetProperty(ref _messages, value); }
+        public ObservableCollection<MessageViewModel> Messages
+        {
+            get => _messages;
+            set => SetProperty(ref _messages, value);
+        }
 
         private string? _userInput;
-        public string? UserInput { get => _userInput; set => SetProperty(ref _userInput, value); }
+        public string? UserInput
+        {
+            get => _userInput;
+            set => SetProperty(ref _userInput, value);
+        }
 
         private bool _isLoading;
-        public bool IsLoading { get => _isLoading; set => SetProperty(ref _isLoading, value); }
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
+        }
 
         public ICommand SendMessageCommand { get; }
 
