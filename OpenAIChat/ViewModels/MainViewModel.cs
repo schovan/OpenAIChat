@@ -32,7 +32,7 @@ namespace OpenAIChat.ViewModels
             _chat = chat;
             _chat.DeltaReceived += OnDeltaReceived;
             Messages.Add(new MessageViewModel { Content = "Welcome to OpenAI Chat", IsUser = false, IsSystem = true });
-            SendMessageCommand = new RelayCommand(async () => await SendMessageAsync());
+            SendMessageCommand = new AsyncRelayCommand(SendMessageAsync);
         }
 
         private async Task SendMessageAsync()
