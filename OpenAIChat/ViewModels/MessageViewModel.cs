@@ -1,19 +1,17 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace OpenAIChat.ViewModels
 {
-    public partial class MessageViewModel : ObservableObject
+    public class MessageViewModel : ViewModelBase
     {
-        [ObservableProperty]
-        private string _content;
+        private string? _content;
+        public string? Content { get => _content; set => SetProperty(ref _content, value); }
 
-        [ObservableProperty]
         private bool _isUser;
+        public bool IsUser { get => _isUser; set => SetProperty(ref _isUser, value); }
 
-        [ObservableProperty]
         private bool _isSystem;
+        public bool IsSystem { get => _isSystem; set => SetProperty(ref _isSystem, value); }
 
-        [ObservableProperty]
         private string? _header;
+        public string? Header { get => _header; set => SetProperty(ref _header, value); }
     }
 }

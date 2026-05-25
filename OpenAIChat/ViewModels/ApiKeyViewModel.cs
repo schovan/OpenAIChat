@@ -1,10 +1,10 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace OpenAIChat.ViewModels
 {
-    public partial class ApiKeyViewModel : ObservableObject, IDialogViewModel<string>
+    public class ApiKeyViewModel : ViewModelBase, IDialogViewModel<string>
     {
-        [ObservableProperty]
-        private string _result;
+        private string? _result;
+        public string? Result { get => _result; set => SetProperty(ref _result, value); }
+
+        string IDialogViewModel<string>.Result => Result!;
     }
 }

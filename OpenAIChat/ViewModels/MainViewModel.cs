@@ -1,14 +1,13 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Input;
 using OpenAIChat.Models;
 using OpenAIChat.Services;
 using OpenAIChat.Tools;
 
 namespace OpenAIChat.ViewModels
 {
-    public partial class MainViewModel : ObservableObject
+    public class MainViewModel : ViewModelBase
     {
         private readonly IOpenAIChatService _chat;
         private readonly List<(string Role, string Content)> _history = new();
@@ -17,23 +16,25 @@ namespace OpenAIChat.ViewModels
         private MessageViewModel? _thinkingMessage;
         private MessageViewModel? _finalMessage;
 
-        [ObservableProperty]
-        private ObservableCollection<MessageViewModel> _messages = new ObservableCollection<MessageViewModel>();
+        private ObservableCollection<MessageViewModel> _messages = new();
+        public ObservableCollection<MessageViewModel> Messages { get => _messages; set => SetProperty(ref _messages, value); }
 
-        [ObservableProperty]
-        private string _userInput;
+        private string? _userInput;
+        public string? UserInput { get => _userInput; set => SetProperty(ref _userInput, value); }
 
-        [ObservableProperty]
         private bool _isLoading;
+        public bool IsLoading { get => _isLoading; set => SetProperty(ref _isLoading, value); }
+
+        public ICommand SendMessageCommand { get; }
 
         public MainViewModel(IOpenAIChatService chat)
         {
             _chat = chat;
             _chat.DeltaReceived += OnDeltaReceived;
             Messages.Add(new MessageViewModel { Content = "Welcome to OpenAI Chat", IsUser = false, IsSystem = true });
+            SendMessageCommand = new RelayCommand(async () => await SendMessageAsync());
         }
 
-        [RelayCommand]
         private async Task SendMessageAsync()
         {
             if (string.IsNullOrWhiteSpace(UserInput) || IsLoading)
